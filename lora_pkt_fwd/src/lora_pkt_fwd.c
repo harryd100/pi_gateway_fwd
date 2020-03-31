@@ -2658,17 +2658,20 @@ void thread_down(void) {
                 jit_result = JIT_ERROR_TX_FREQ;
                 MSG_DEBUG(DEBUG_ERROR, "ERROR~ Packet REJECTED, unsupported frequency - %u (min:%u,max:%u)\n", txpkt.freq_hz, tx_freq_min[txpkt.rf_chain], tx_freq_max[txpkt.rf_chain]);
             }
- 
-			if (jit_result == JIT_ERROR_OK) {
-                int pwr_level = 14;
-                for (i=0; i<txlut.size; i++) {
+ 	    /* check supported power levels agains requested,
+	    	start with lowest level (assuming table is sorted)
+	        if no exact match use next lower level supported
+	    */
+	    if (jit_result == JIT_ERROR_OK) {
+                int pwr_level = txlut.lut[0].rf_power;
+                for (i=1; i<txlut.size; i++) {
                     if (txlut.lut[i].rf_power <= txpkt.rf_power &&
                             pwr_level < txlut.lut[i].rf_power) {
                         pwr_level = txlut.lut[i].rf_power;
                     }
                 }
                 if (pwr_level != txpkt.rf_power) {
-					MSG_DEBUG(DEBUG_INFO, "INFO~ Can't find specify RF power %ddB, use %ddB\n", txpkt.rf_power, pwr_level);
+			MSG_DEBUG(DEBUG_INFO, "INFO~ Can't find specify RF power %ddB, use %ddB\n", txpkt.rf_power, pwr_level);
                     txpkt.rf_power = pwr_level;
                 }
             }
